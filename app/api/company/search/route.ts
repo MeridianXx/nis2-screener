@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { fail, ok } from '@/lib/api-response';
-import { searchMockCompanies } from '@/lib/mocks/companies';
+import { findCompanyHits } from '@/lib/company';
+import { RoaringNotConfiguredError } from '@/lib/roaring';
 
 const querySchema = z.object({
   q: z.string().min(1).max(120),
 });
-
-const useMock = process.env.NEXT_PUBLIC_USE_MOCK_COMPANY_DATA === 'true';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -19,13 +18,20 @@ export async function GET(req: Request) {
     );
   }
 
-  if (useMock) {
-    return NextResponse.json(ok(searchMockCompanies(parsed.data.q)));
+  try {
+    const hits = await findCompanyHits(parsed.data.q);
+    return NextResponse.json(ok(hits));
+  } catch (err) {
+    if (err instanceof RoaringNotConfiguredError) {
+      return NextResponse.json(
+        fail('NOT_CONFIGURED', 'Företagsuppslag är inte aktiverat i denna miljö.'),
+        { status: 503 },
+      );
+    }
+    console.error('[company/search] failed:', err);
+    return NextResponse.json(
+      fail('UPSTREAM_ERROR', 'Företagssökningen är inte tillgänglig just nu.'),
+      { status: 502 },
+    );
   }
-
-  // TODO(session 3): Implement Roaring /search proxy with rate limiting.
-  return NextResponse.json(
-    fail('NOT_IMPLEMENTED', 'Företagsuppslag är inte aktiverat i denna miljö.'),
-    { status: 501 },
-  );
 }

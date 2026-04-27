@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { fail, ok } from '@/lib/api-response';
-import { getMockCompany } from '@/lib/mocks/companies';
+import { CompanyNotFoundError, fetchCompanyProfile } from '@/lib/company';
+import { RoaringNotConfiguredError } from '@/lib/roaring';
 
 const orgnrSchema = z.string().regex(/^\d{10}$/, 'Organisationsnummer ska vara 10 siffror.');
-
-const useMock = process.env.NEXT_PUBLIC_USE_MOCK_COMPANY_DATA === 'true';
 
 export async function GET(_req: Request, { params }: { params: { orgnr: string } }) {
   const parsed = orgnrSchema.safeParse(params.orgnr);
@@ -16,20 +15,26 @@ export async function GET(_req: Request, { params }: { params: { orgnr: string }
     );
   }
 
-  if (useMock) {
-    const company = getMockCompany(parsed.data);
-    if (!company) {
+  try {
+    const profile = await fetchCompanyProfile(parsed.data);
+    return NextResponse.json(ok(profile));
+  } catch (err) {
+    if (err instanceof CompanyNotFoundError) {
       return NextResponse.json(
         fail('NOT_FOUND', 'Företaget kunde inte hittas. Försök med organisationsnummer istället.'),
         { status: 404 },
       );
     }
-    return NextResponse.json(ok(company));
+    if (err instanceof RoaringNotConfiguredError) {
+      return NextResponse.json(
+        fail('NOT_CONFIGURED', 'Företagsuppslag är inte aktiverat i denna miljö.'),
+        { status: 503 },
+      );
+    }
+    console.error('[company/[orgnr]] failed:', err);
+    return NextResponse.json(
+      fail('UPSTREAM_ERROR', 'Företagsuppslag är inte tillgängligt just nu.'),
+      { status: 502 },
+    );
   }
-
-  // TODO(session 3): Implement Roaring /company proxy with 60-day Postgres cache.
-  return NextResponse.json(
-    fail('NOT_IMPLEMENTED', 'Företagsuppslag är inte aktiverat i denna miljö.'),
-    { status: 501 },
-  );
 }

@@ -8,8 +8,8 @@ export type CompanyProfile = CompanyHit & {
   sniCode: string;
   sniLabel: string | null;
   employees: number | null;
-  turnover: number | null; // MEUR
-  balance: number | null; // MEUR
+  turnover: number | null; // MSEK
+  balance: number | null; // MSEK
 };
 
 export const MOCK_COMPANIES: CompanyProfile[] = [
@@ -20,8 +20,8 @@ export const MOCK_COMPANIES: CompanyProfile[] = [
     sniCode: '35.13',
     sniLabel: 'Eldistribution',
     employees: 420,
-    turnover: 180,
-    balance: 90,
+    turnover: 2100,
+    balance: 1080,
   },
   {
     orgnr: '5560000456',
@@ -30,8 +30,8 @@ export const MOCK_COMPANIES: CompanyProfile[] = [
     sniCode: '36.00',
     sniLabel: 'Vattenförsörjning',
     employees: 80,
-    turnover: 25,
-    balance: 18,
+    turnover: 290,
+    balance: 215,
   },
   {
     orgnr: '5560000789',
@@ -40,8 +40,8 @@ export const MOCK_COMPANIES: CompanyProfile[] = [
     sniCode: '10.71',
     sniLabel: 'Tillverkning av matbröd',
     employees: 12,
-    turnover: 1,
-    balance: 0.5,
+    turnover: 12,
+    balance: 6,
   },
   {
     orgnr: '5560000999',
@@ -50,8 +50,8 @@ export const MOCK_COMPANIES: CompanyProfile[] = [
     sniCode: '63.11',
     sniLabel: 'Databehandling, hosting',
     employees: 140,
-    turnover: 45,
-    balance: 30,
+    turnover: 520,
+    balance: 350,
   },
 ];
 
