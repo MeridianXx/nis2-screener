@@ -34,7 +34,7 @@ type ApiResponse<T> = { data: T; error: null } | { data: null; error: { message:
 
 Rutter validerar input med `zod`. Externa API-fel ska fångas och översättas till användarvänliga meddelanden.
 
-Alla externa API-anrop (Roaring, Anthropic) sker **server-side only**. Nycklar finns i env-variabler, aldrig på klienten.
+Alla externa API-anrop (Apiverket, Anthropic) sker **server-side only**. Nycklar finns i env-variabler, aldrig på klienten.
 
 ## Arkitekturregler
 

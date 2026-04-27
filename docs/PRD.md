@@ -40,11 +40,11 @@ Externa besökare som googlar "omfattas mitt företag av NIS2" och hittar verkty
 
 Användaren skriver företagsnamn eller organisationsnummer. Verktyget:
 
-- Debouncar input (350ms) och anropar Roaring API för sökning
+- Debouncar input (350ms) och anropar Apiverket för sökning
 - Visar dropdown med upp till 6 träffar (namn, orgnr, stad)
-- Vid val: hämtar full företagsprofil (SNI-kod, anställda, omsättning, balansomslutning)
+- Vid val: hämtar företagsprofil (SNI-kod, namn, säte) från Apiverket
 - Mappar SNI-kod mot NIS2-sektorer via `data/sni-mapping.json`
-- Visar sammanställning av hämtade uppgifter för bekräftelse
+- På bekräftelsesidan fyller användaren själv i anställda, omsättning och balansomslutning — Apiverket levererar inte storleksuppgifter
 
 Vid **tvetydig SNI-mappning** (t.ex. 62.02 = datakonsult som kan vara utvecklingskonsult ELLER MSP): visa disambigueringsfråga innan bedömning.
 
@@ -111,14 +111,15 @@ Innehåller:
 - Semantiska HTML-element
 
 ### Säkerhet
-- Alla externa API-nycklar (Roaring, Claude) server-side endast
+- Alla externa API-nycklar (Apiverket, Claude) server-side endast
 - Rate limiting per IP på publika endpoints (3 uppslag/minut utan auth)
 - Ingen PII sparas utan explicit samtycke
 - HTTPS enforced
 
 ### Caching
-- Företagsprofildata cachas i Postgres med 60 dagars TTL
-- Samma företag ska inte slå Roaring-API två gånger på 60 dagar
+- Företagsprofildata cachas i Postgres med 90 dagars TTL (anpassat efter Apiverkets 200/dag-gräns på gratisplanen)
+- Söklisteresultat cachas i 7 dagar med hash av query som nyckel
+- Samma företag ska inte slå Apiverket två gånger inom TTL:n
 - AI-förklaringar cachas per `{verdict_code, sector, size_category}` i 30 dagar
 
 ## 6. Teknisk arkitektur
@@ -136,8 +137,8 @@ app/
   page.tsx                 # Landing med sök/starta manuellt
   assess/                  # Manuellt 3-stegsflöde
   api/
-    company/search/        # Roaring /search proxy
-    company/[orgnr]/       # Roaring /company proxy med caching
+    company/search/        # Apiverket /v1/companies?q= proxy
+    company/[orgnr]/       # Apiverket /v1/companies/{orgnr} proxy med caching
     assess/                # Regelmotor som endpoint
     explain/               # Claude API proxy
 components/
@@ -148,7 +149,7 @@ components/
 lib/
   assess.ts                # Regelmotor (ren funktion)
   sni-mapping.ts           # SNI→NIS2 lookup
-  roaring.ts               # Roaring API-klient
+  apiverket.ts             # Apiverket-klient (svensk företagsdata)
   anthropic.ts             # Claude API-klient
   cache.ts                 # Cache-helpers mot Postgres
 data/
