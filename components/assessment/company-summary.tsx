@@ -1,27 +1,12 @@
-import Link from 'next/link';
 import type { CompanyProfile } from '@/lib/mocks/companies';
 import { SECTOR_LOOKUP } from '@/lib/sectors';
-import { Button } from '@/components/ui/button';
 
 type Props = {
   profile: CompanyProfile;
   sectorKey: string | null;
-  resultHref: string;
 };
 
-const numberFormat = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
-
-function formatMsek(value: number | null): string {
-  if (value === null) return '—';
-  return `${numberFormat.format(Math.round(value))} MSEK`;
-}
-
-function formatEmployees(value: number | null): string {
-  if (value === null) return '—';
-  return numberFormat.format(value);
-}
-
-export function CompanySummary({ profile, sectorKey, resultHref }: Props) {
+export function CompanySummary({ profile, sectorKey }: Props) {
   const sectorLabel = sectorKey
     ? SECTOR_LOOKUP[sectorKey]?.label ?? 'Ingen NIS2-sektor'
     : 'Ingen NIS2-sektor identifierad';
@@ -29,10 +14,10 @@ export function CompanySummary({ profile, sectorKey, resultHref }: Props) {
   const facts: { label: string; value: string }[] = [
     { label: 'Organisationsnummer', value: profile.orgnr },
     { label: 'Säte', value: profile.city || '—' },
-    { label: 'SNI-kod', value: `${profile.sniCode}${profile.sniLabel ? ` · ${profile.sniLabel}` : ''}` },
-    { label: 'Antal anställda', value: formatEmployees(profile.employees) },
-    { label: 'Nettoomsättning', value: formatMsek(profile.turnover) },
-    { label: 'Balansomslutning', value: formatMsek(profile.balance) },
+    {
+      label: 'SNI-kod',
+      value: `${profile.sniCode || '—'}${profile.sniLabel ? ` · ${profile.sniLabel}` : ''}`,
+    },
     { label: 'Bedömd sektor', value: sectorLabel },
   ];
 
@@ -55,16 +40,6 @@ export function CompanySummary({ profile, sectorKey, resultHref }: Props) {
           </div>
         ))}
       </dl>
-
-      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-[13px] text-mid">
-          Stämmer uppgifterna inte? Korrigera dem manuellt i nästa steg eller starta om
-          via <Link href="/assess" className="underline decoration-border underline-offset-2 hover:decoration-ink">manuell bedömning</Link>.
-        </p>
-        <Link href={resultHref}>
-          <Button>Hämta bedömning</Button>
-        </Link>
-      </div>
     </section>
   );
 }
