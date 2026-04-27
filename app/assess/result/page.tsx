@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { assess } from '@/lib/assess';
+import { assess, classifySize } from '@/lib/assess';
 import { decodeFormFromParams, toAssessInput } from '@/lib/assess-form';
 import { Button } from '@/components/ui/button';
 import { VerdictHero } from '@/components/results/verdict-hero';
 import { FactGrid } from '@/components/results/fact-grid';
 import { AiExplanation } from '@/components/results/ai-explanation';
+import { logAssessment } from '@/lib/cache';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -18,12 +19,22 @@ function flatten(params: SearchParams): URLSearchParams {
   return out;
 }
 
-export default function ResultPage({ searchParams }: { searchParams: SearchParams }) {
-  const form = decodeFormFromParams(flatten(searchParams));
+export default async function ResultPage({ searchParams }: { searchParams: SearchParams }) {
+  const flat = flatten(searchParams);
+  const form = decodeFormFromParams(flat);
   if (!form.sectorKey) redirect('/assess');
 
   const input = toAssessInput(form);
   const verdict = assess(input);
+
+  // Fire-and-forget; failures are logged inside the helper and never block the
+  // result render. Only orgnr is persisted (no PII), per CLAUDE.md.
+  await logAssessment({
+    orgnr: flat.get('orgnr'),
+    verdict: verdict.code,
+    sector: verdict.sector,
+    sizeClass: classifySize(input),
+  });
 
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-12">
