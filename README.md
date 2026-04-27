@@ -10,6 +10,16 @@ Byggs av Tech Stn för intern kvalificering av kunder och prospects, samt som le
 
 🚧 Under utveckling · v1 under byggande enligt `docs/PRD.md`
 
+**Session 1 klar (april 2026):**
+- Next.js 14 App Router scaffold (TypeScript strict, Tailwind v4, ESLint + Prettier, Jest + ts-jest)
+- Brand tokens (`app/globals.css`) och Google Fonts laddade via `next/font`
+- Regelmotor `lib/assess.ts` (ren funktion) med 21 enhetstester gröna
+- SNI-mappningsmodul `lib/sni-mapping.ts` med exakt + prefix-lookup
+- API-stubbar: `/api/assess` (live), `/api/explain` (501, kopplas i session 2),
+  `/api/company/search` och `/api/company/[orgnr]` (mockdata bakom
+  `NEXT_PUBLIC_USE_MOCK_COMPANY_DATA=true`, Roaring kopplas i session 3)
+- Minimal landing på `/` med sköld-logga och två CTA
+
 ## Teknisk stack
 
 - Next.js 14 (App Router) + TypeScript

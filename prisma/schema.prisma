@@ -1,0 +1,40 @@
+// Schema placeholder — full models are introduced together with Postgres in
+// session 3. Source of truth: PRD section 6 ("Datamodell").
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model CompanyCache {
+  orgnr     String   @id
+  name      String
+  city      String?
+  sniCode   String
+  sniLabel  String?
+  employees Int?
+  turnover  Float?
+  balance   Float?
+  fetchedAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model AssessmentLog {
+  id        String   @id @default(cuid())
+  orgnr     String?
+  verdict   String
+  sector    String?
+  sizeClass String?
+  createdAt DateTime @default(now())
+}
+
+model ExplanationCache {
+  cacheKey  String   @id
+  text      String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
