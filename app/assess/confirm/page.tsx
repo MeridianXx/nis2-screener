@@ -51,7 +51,7 @@ export default async function ConfirmPage({
           href="/"
           className="font-mono text-[11px] uppercase tracking-[0.18em] text-mid hover:text-ink"
         >
-          ← NIS2-kollen
+          ← Tech Stn · NIS2-kollen
         </Link>
       </div>
 
