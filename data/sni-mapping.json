@@ -66,6 +66,17 @@
 
     "46.38": { "sector": "livsmedel", "bilaga": 2, "confidence": "high", "label": "Partihandel med livsmedel" },
 
+    "46.46": {
+      "sector": null, "bilaga": null, "confidence": "medium", "label": "Partihandel med medicinsk utrustning och apoteksvaror",
+      "disambiguation": {
+        "question": "Vilken typ av partihandel bedriver ni?",
+        "options": [
+          { "label": "Distribution av läkemedel eller farmaceutiska produkter för humanbruk", "maps": { "sector": "halsa-vard", "bilaga": 1 } },
+          { "label": "Endast medicinsk utrustning eller hjälpmedel (madrasser, instrument, rullstolar etc)", "maps": { "sector": null, "bilaga": null } }
+        ]
+      }
+    },
+
     "61.10": { "sector": "digital-infra", "bilaga": 1, "confidence": "high", "label": "Trådbunden telekommunikation" },
     "61.20": { "sector": "digital-infra", "bilaga": 1, "confidence": "high", "label": "Trådlös telekommunikation" },
     "61.30": { "sector": "digital-infra", "bilaga": 1, "confidence": "high", "label": "Satellitkommunikation" },
