@@ -1,5 +1,6 @@
-// Schema placeholder — full models are introduced together with Postgres in
-// session 3. Source of truth: PRD section 6 ("Datamodell").
+// Source of truth: PRD section 6 ("Datamodell"). ExplanationCache is
+// active in session 2 and used by /api/explain. CompanyCache and
+// AssessmentLog are introduced together with Roaring/logging in session 3.
 
 generator client {
   provider = "prisma-client-js"
