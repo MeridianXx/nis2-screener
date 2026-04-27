@@ -33,9 +33,8 @@ export async function GET(_req: Request, { params }: { params: { orgnr: string }
     }
     if (err instanceof ApiverketRateLimitError) {
       const retry = err.retryAfterSeconds;
-      const dailyExhausted = err.diagnostic.remaining === 0;
-      const message = dailyExhausted
-        ? 'Företagsuppslagets dagliga gräns är nådd. Försök igen imorgon.'
+      const message = err.diagnostic.isDaily
+        ? 'Företagsuppslagets dagliga gräns är nådd. Försök igen imorgon eller uppgradera planen.'
         : 'Företagsuppslaget är tillfälligt blockerat — vänta en stund och försök igen.';
       return NextResponse.json(fail('RATE_LIMITED', message, err.diagnostic), {
         status: 429,

@@ -67,6 +67,8 @@ export class ApiverketRateLimitError extends Error {
       remaining: number | null;
       limit: number | null;
       resetEpoch: number | null;
+      isDaily: boolean;
+      upstreamMessage: string | null;
       bodySnippet: string;
     },
   ) {
@@ -229,21 +231,28 @@ function parseRetryAfter(text: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-// Pull Apiverket's documented meta.rate_limit block out of a 429 body so
-// we can tell per-minute throttling apart from a fully exhausted daily
-// quota. Logged + included in the error so it's visible in Vercel logs.
+// Apiverket's 429 body uses a different envelope than success responses:
+// { error: { type, code, message, request_id } } and no meta block. Pull
+// the message out and detect "daily" vs sliding per-minute throttling so
+// the user-facing copy is honest about what they need to do (wait
+// minutes vs wait until tomorrow / upgrade plan).
 function buildRateLimitDiagnostic(text: string): {
   remaining: number | null;
   limit: number | null;
   resetEpoch: number | null;
+  isDaily: boolean;
+  upstreamMessage: string | null;
   bodySnippet: string;
 } {
   let remaining: number | null = null;
   let limit: number | null = null;
   let resetEpoch: number | null = null;
+  let isDaily = false;
+  let upstreamMessage: string | null = null;
   try {
     const body = JSON.parse(text) as {
       meta?: { rate_limit?: { limit?: number; remaining?: number; reset?: number } };
+      error?: { type?: string; code?: string; message?: string };
     };
     const rl = body?.meta?.rate_limit;
     if (rl) {
@@ -251,14 +260,28 @@ function buildRateLimitDiagnostic(text: string): {
       if (typeof rl.remaining === 'number') remaining = rl.remaining;
       if (typeof rl.reset === 'number') resetEpoch = rl.reset;
     }
+    if (body?.error?.message) {
+      upstreamMessage = body.error.message;
+      // "Daily company search limit of 20 exceeded for free tier" → daily.
+      // Per-minute messages tend to say "rate limit" without "daily".
+      if (/daily/i.test(body.error.message)) isDaily = true;
+    }
+    if (remaining === 0) isDaily = true;
   } catch {
-    // Not JSON — keep nulls.
+    // Not JSON — keep defaults.
   }
   console.warn(
     '[apiverket] 429',
-    JSON.stringify({ remaining, limit, resetEpoch, bodySnippet: text.slice(0, 200) }),
+    JSON.stringify({
+      remaining,
+      limit,
+      resetEpoch,
+      isDaily,
+      upstreamMessage,
+      bodySnippet: text.slice(0, 200),
+    }),
   );
-  return { remaining, limit, resetEpoch, bodySnippet: text.slice(0, 200) };
+  return { remaining, limit, resetEpoch, isDaily, upstreamMessage, bodySnippet: text.slice(0, 200) };
 }
 
 // Adapter to the project-wide CompanyProfile shape used by the cache and
