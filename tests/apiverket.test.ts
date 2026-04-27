@@ -121,6 +121,51 @@ describe('searchCompanies + getCompany — fetch behaviour', () => {
     expect(results[0]?.legalForm).toBe('AB');
   });
 
+  test('searchCompanies unwraps { meta, data: [...] } envelope', async () => {
+    process.env.APIVERKET_API_KEY = 'sk_test_123';
+    let calledUrl = '';
+    globalThis.fetch = (async (url: string) => {
+      calledUrl = url;
+      return new Response(
+        JSON.stringify({
+          meta: { request_id: 'req_y', rate_limit: { limit: 100, remaining: 8 } },
+          data: [
+            {
+              org_number: '5560566258',
+              name: 'Ericsson AB',
+              legal_form: 'AB',
+              status: 'Aktivt',
+              postal_code: '16480',
+              city: 'STOCKHOLM',
+              sni_codes: [{ code: '62100', description: 'Dataprogrammering' }],
+            },
+          ],
+        }),
+        { status: 200 },
+      );
+    }) as typeof fetch;
+
+    const results = await searchCompanies('ericsson');
+    expect(calledUrl).toContain('/v1/companies/search?q=ericsson');
+    expect(calledUrl).toContain('limit=6');
+    expect(results).toHaveLength(1);
+    expect(results[0]?.orgnr).toBe('5560566258');
+    expect(results[0]?.sniCodes).toEqual(['62.10']);
+  });
+
+  test('searchCompanies rejects queries shorter than 2 chars without calling upstream', async () => {
+    process.env.APIVERKET_API_KEY = 'sk_test_123';
+    let called = false;
+    globalThis.fetch = (async () => {
+      called = true;
+      return new Response('{}', { status: 200 });
+    }) as typeof fetch;
+
+    expect(await searchCompanies('a')).toEqual([]);
+    expect(await searchCompanies(' ')).toEqual([]);
+    expect(called).toBe(false);
+  });
+
   test('getCompany unwraps { meta, data } envelope and flattened address', async () => {
     process.env.APIVERKET_API_KEY = 'sk_test_123';
     // Shape mirrors the live 2026-04-27 response from /v1/companies/{orgnr}.

@@ -164,15 +164,13 @@ async function callApiverket<T>(path: string): Promise<{ status: number; json: T
   }
 }
 
-export async function searchCompanies(query: string): Promise<ApiverketCompany[]> {
+export async function searchCompanies(query: string, limit = 6): Promise<ApiverketCompany[]> {
   const trimmed = query.trim();
-  if (!trimmed) return [];
-  // The free-text /v1/companies?q= endpoint returns 404 against the live
-  // API as of 2026-04-27 — we don't yet know the documented search path.
-  // Until that's resolved, the route still tries this URL so the app surfaces
-  // an error rather than pretending to work; lib/company.ts adds an orgnr
-  // shortcut so digit-only queries still return a hit via getCompany().
-  const path = `/v1/companies?q=${encodeURIComponent(trimmed)}`;
+  if (trimmed.length < 2) return [];
+  // /v1/companies/search per the Apiverket API reference: q is required
+  // (min 2 chars, substring match) and limit is capped at 100. Response
+  // shape is { meta, data: [...companies] } — unwrap() handles the envelope.
+  const path = `/v1/companies/search?q=${encodeURIComponent(trimmed)}&limit=${limit}`;
   const { status, json, text } = await callApiverket<ApiverketEnvelope<ApiverketSearchRaw> | ApiverketSearchRaw>(
     path,
   );
