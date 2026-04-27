@@ -1,5 +1,6 @@
 import { SECTOR_LOOKUP } from '@/lib/sectors';
 import type { AssessInput } from '@/lib/assess';
+import { msekToMeur } from '@/lib/currency';
 
 export type FormState = {
   sectorKey: string | null;
@@ -41,12 +42,17 @@ export function toAssessInput(form: FormState): AssessInput {
     ? SECTOR_LOOKUP[form.sectorKey] ?? null
     : null;
 
+  // The form collects financials in MSEK for the Swedish audience;
+  // the rule engine works in MEUR per EU's SME definition.
+  const turnoverMsek = parseNumber(form.turnover);
+  const balanceMsek = parseNumber(form.balance);
+
   return {
     sectorKey: sector ? sector.key : null,
     bilaga: sector ? sector.bilaga : null,
     employees: parseNumber(form.employees),
-    turnover: parseNumber(form.turnover),
-    balance: parseNumber(form.balance),
+    turnover: turnoverMsek === null ? null : msekToMeur(turnoverMsek),
+    balance: balanceMsek === null ? null : msekToMeur(balanceMsek),
     specials: form.specials,
   };
 }

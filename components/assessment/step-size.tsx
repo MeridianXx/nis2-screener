@@ -13,8 +13,9 @@ export function StepSize({ employees, turnover, balance, onChange }: Props) {
       <div className="flex flex-col gap-2">
         <h2 className="text-[28px] leading-tight text-ink">Hur stort är företaget?</h2>
         <p className="text-[15px] text-mid">
-          Cybersäkerhetslagen följer EU:s SMF-definition: minst ett av talen avgör om ni
-          räknas som medelstort eller stort. Hoppa över fält ni inte har siffror på.
+          Cybersäkerhetslagen följer EU:s SMF-definition. Minst ett av talen avgör om ni
+          räknas som medelstort eller stort — hoppa över fält ni inte har siffror på.
+          Belopp anges i MSEK (miljoner kronor).
         </p>
       </div>
 
@@ -25,25 +26,25 @@ export function StepSize({ employees, turnover, balance, onChange }: Props) {
           placeholder="120"
           value={employees}
           onChange={(e) => onChange({ employees: e.target.value })}
-          hint="Heltidsekvivalenter"
+          hint="Heltidsekvivalenter (årsanställda)"
         />
         <Input
-          label="Årsomsättning"
+          label="Nettoomsättning"
           inputMode="decimal"
-          placeholder="25"
+          placeholder="300"
           value={turnover}
           onChange={(e) => onChange({ turnover: e.target.value })}
-          suffix="MEUR"
-          hint="Senaste räkenskapsår"
+          suffix="MSEK"
+          hint="Enligt senaste årsredovisning"
         />
         <Input
           label="Balansomslutning"
           inputMode="decimal"
-          placeholder="18"
+          placeholder="200"
           value={balance}
           onChange={(e) => onChange({ balance: e.target.value })}
-          suffix="MEUR"
-          hint="Tillgångar i balansräkningen"
+          suffix="MSEK"
+          hint="Summa tillgångar i balansräkningen (= summa skulder + eget kapital)"
         />
       </div>
     </div>

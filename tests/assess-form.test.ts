@@ -35,8 +35,8 @@ describe('toAssessInput', () => {
     const input = toAssessInput({
       sectorKey: NONE_SECTOR,
       employees: '500',
-      turnover: '100',
-      balance: '60',
+      turnover: '1150',
+      balance: '690',
       specials: ['cer'],
     });
     expect(input.sectorKey).toBeNull();
@@ -51,9 +51,16 @@ describe('toAssessInput', () => {
     expect(input.employees).toBe(120);
   });
 
-  test('parses Swedish decimal commas as dots', () => {
-    const input = toAssessInput({ ...INITIAL_FORM, sectorKey: 'energi', turnover: '12,5' });
-    expect(input.turnover).toBe(12.5);
+  test('converts MSEK input to MEUR for the rule engine', () => {
+    // 575 MSEK at 11.5 SEK/EUR → 50 MEUR (large-company turnover threshold)
+    const input = toAssessInput({ ...INITIAL_FORM, sectorKey: 'energi', turnover: '575' });
+    expect(input.turnover).toBeCloseTo(50, 5);
+  });
+
+  test('parses Swedish decimal commas as dots and still converts to MEUR', () => {
+    // 11,5 MSEK = 1 MEUR
+    const input = toAssessInput({ ...INITIAL_FORM, sectorKey: 'energi', turnover: '11,5' });
+    expect(input.turnover).toBeCloseTo(1, 5);
   });
 });
 
