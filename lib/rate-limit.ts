@@ -4,7 +4,12 @@
 // simultaneous taps from the same user). Swap to Vercel KV / Upstash Redis
 // when traffic warrants strict cross-instance enforcement.
 
-export const RATE_LIMIT_PER_MINUTE = 3;
+// Per-IP minute window. PRD §5 originally specced 3/min for anonymous
+// abuse prevention, but that's too tight for active sales-team testing
+// (each typed search + each company-profile fetch counts toward the same
+// bucket). 20/min still rules out scraping while leaving real users
+// unbothered.
+export const RATE_LIMIT_PER_MINUTE = 20;
 export const RATE_LIMIT_WINDOW_MS = 60_000;
 
 type Bucket = { count: number; reset: number };

@@ -7,7 +7,7 @@ import type { CompanyHit } from '@/lib/mocks/companies';
 
 const DEBOUNCE_MS = 350;
 
-type Status = 'idle' | 'loading' | 'ready' | 'empty' | 'error';
+type Status = 'idle' | 'loading' | 'ready' | 'empty' | 'rate-limited' | 'error';
 
 export function CompanySearch() {
   const router = useRouter();
@@ -28,6 +28,11 @@ export function CompanySearch() {
     async function run() {
       try {
         const res = await fetch(`/api/company/search?q=${encodeURIComponent(debounced)}`);
+        if (cancelled) return;
+        if (res.status === 429) {
+          setStatus('rate-limited');
+          return;
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as { data: CompanyHit[] | null };
         if (cancelled) return;
@@ -68,6 +73,9 @@ export function CompanySearch() {
           {status === 'loading' ? <Row text="Söker…" /> : null}
           {status === 'empty' ? (
             <Row text={`Ingen träff för "${debounced}". Prova organisationsnummer eller starta en manuell bedömning.`} />
+          ) : null}
+          {status === 'rate-limited' ? (
+            <Row text="Du söker lite för fort — vänta en stund och försök igen." />
           ) : null}
           {status === 'error' ? (
             <Row text="Kunde inte söka just nu. Försök igen om en stund." />
