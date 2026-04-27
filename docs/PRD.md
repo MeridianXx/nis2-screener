@@ -1,4 +1,4 @@
-# Product Requirements Document — NIS2 Screener
+# Product Requirements Document — NIS2-kollen
 
 **Version:** 1.0 (April 2026)
 **Status:** För implementation

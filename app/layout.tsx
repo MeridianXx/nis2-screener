@@ -24,7 +24,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'NIS2 Screener · Tech Stn',
+  title: 'NIS2-kollen',
   description:
     'Preliminär bedömning om ert företag omfattas av svenska cybersäkerhetslagen (NIS2).',
 };

@@ -10,7 +10,7 @@ export default function AssessPage() {
           href="/"
           className="font-mono text-[11px] uppercase tracking-[0.18em] text-mid hover:text-ink"
         >
-          ← Tech Stn · NIS2 Screener
+          ← NIS2-kollen
         </Link>
       </div>
 

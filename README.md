@@ -1,4 +1,4 @@
-# NIS2 Screener
+# NIS2-kollen
 
 Ett screeningverktyg för att preliminärt bedöma om ett företag omfattas av svenska cybersäkerhetslagen (2025:1506) som implementerar NIS2-direktivet i svensk rätt.
 

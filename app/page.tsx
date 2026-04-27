@@ -8,7 +8,7 @@ export default function LandingPage() {
       <div className="flex flex-col items-center gap-4">
         <ShieldMark />
         <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-mid">
-          Tech Stn · NIS2 Screener
+          NIS2-kollen
         </p>
       </div>
 
