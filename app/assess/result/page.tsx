@@ -70,16 +70,16 @@ export default async function ResultPage({ searchParams }: { searchParams: Searc
 function ResourceList() {
   const links = [
     {
-      href: 'https://www.msb.se/cybersakerhetslagen',
+      href: 'https://www.mcf.se/sv/amnesomraden/informationssakerhet-och-cybersakerhet/krav-och-regler-inom-informationssakerhet-och-cybersakerhet/nis-direktivet/cybersakerhetslagen-nis2/',
       label: 'MCF — Cybersäkerhetslagens vägledning',
     },
     {
-      href: 'https://www.regeringen.se/rattsliga-dokument/lag/2025/12/sfs-20251506/',
-      label: 'SFS 2025:1506 — Cybersäkerhetslagen',
+      href: 'https://www.riksdagen.se/sv/dokument-och-lagar/dokument/svensk-forfattningssamling/cybersakerhetslag-20251506_sfs-2025-1506/',
+      label: 'SFS 2025:1506 — Cybersäkerhetslagen (Riksdagen)',
     },
     {
-      href: 'https://www.msb.se/anmalan-nis2',
-      label: 'Anmälningsportal (MCFFS 2026:1)',
+      href: 'https://www.mcf.se/sv/aktuellt/nyheter/2026/februari/anmala-sin-verksamhet-enligt-cybersakerhetslagen-nis2/',
+      label: 'Anmäl er verksamhet enligt cybersäkerhetslagen (MCF)',
     },
   ];
   return (
