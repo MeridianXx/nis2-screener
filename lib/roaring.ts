@@ -83,10 +83,14 @@ async function callRoaring<T>(path: string): Promise<T> {
   if (!config) throw new RoaringNotConfiguredError();
   const token = await getAccessToken(config);
 
+  const url = `${config.baseUrl}${path}`;
+  const debug = process.env.ROARING_DEBUG === 'true';
+  if (debug) console.warn('[roaring] →', url);
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const res = await fetch(`${config.baseUrl}${path}`, {
+    const res = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
@@ -99,11 +103,12 @@ async function callRoaring<T>(path: string): Promise<T> {
       cachedToken = null;
     }
     if (!res.ok) {
-      throw new Error(
-        `Roaring ${path} → ${res.status}: ${await res.text().catch(() => '')}`,
-      );
+      const body = await res.text().catch(() => '');
+      throw new Error(`Roaring ${path} → ${res.status}: ${body}`);
     }
-    return (await res.json()) as T;
+    const json = (await res.json()) as T;
+    if (debug) console.warn('[roaring] ←', url, JSON.stringify(json).slice(0, 800));
+    return json;
   } finally {
     clearTimeout(timeout);
   }
@@ -156,10 +161,25 @@ function normalizeProfile(raw: RoaringCompanyResponse): CompanyProfile {
   };
 }
 
+// Roaring uses /{apiName}/{version}/{resource} per their auth guide example
+// (/person/1.0/person). Paths can be overridden via env to swap to a
+// different API product the sandbox subscription includes.
+const SEARCH_PATH_TEMPLATE =
+  process.env.ROARING_SEARCH_PATH ??
+  '/companysearch/2.0/companies?nameContaining={q}&maxHits={limit}';
+const COMPANY_PATH_TEMPLATE =
+  process.env.ROARING_COMPANY_PATH ?? '/companyinformation/2.0/companies/{orgnr}';
+
+function fillTemplate(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key: string) => vars[key] ?? '');
+}
+
 export async function searchCompanies(query: string, limit = 6): Promise<CompanyHit[]> {
-  const json = await callRoaring<RoaringSearchResponse>(
-    `/se/company-information/2.0/companies?nameContaining=${encodeURIComponent(query)}&maxHits=${limit}`,
-  );
+  const path = fillTemplate(SEARCH_PATH_TEMPLATE, {
+    q: encodeURIComponent(query),
+    limit: String(limit),
+  });
+  const json = await callRoaring<RoaringSearchResponse>(path);
   const rawHits = json.hits ?? json.companies ?? [];
   return rawHits.map((h) => ({
     orgnr: h.companyId ?? '',
@@ -169,8 +189,7 @@ export async function searchCompanies(query: string, limit = 6): Promise<Company
 }
 
 export async function getCompanyProfile(orgnr: string): Promise<CompanyProfile> {
-  const json = await callRoaring<RoaringCompanyResponse>(
-    `/se/company-information/2.0/companies/${orgnr}`,
-  );
+  const path = fillTemplate(COMPANY_PATH_TEMPLATE, { orgnr });
+  const json = await callRoaring<RoaringCompanyResponse>(path);
   return normalizeProfile(json);
 }
