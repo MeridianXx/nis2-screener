@@ -57,13 +57,14 @@ export function toAssessInput(form: FormState): AssessInput {
   };
 }
 
-export function encodeFormToParams(form: FormState): URLSearchParams {
+export function encodeFormToParams(form: FormState, orgnr?: string | null): URLSearchParams {
   const params = new URLSearchParams();
   if (form.sectorKey) params.set('sector', form.sectorKey);
   if (form.employees) params.set('employees', form.employees);
   if (form.turnover) params.set('turnover', form.turnover);
   if (form.balance) params.set('balance', form.balance);
   if (form.specials.length) params.set('specials', form.specials.join(','));
+  if (orgnr) params.set('orgnr', orgnr);
   return params;
 }
 
