@@ -29,6 +29,16 @@ export async function findCompanyHits(query: string): Promise<CompanyHit[]> {
 
   if (mockMode()) return searchMockCompanies(trimmed);
 
+  // Apiverket's free-text search path is still unconfirmed, but
+  // /v1/companies/{orgnr} is solid. If the user typed a 10-digit org
+  // number (with or without the "XXXXXX-XXXX" hyphen), short-circuit to
+  // the lookup endpoint and surface a single hit so the flow works.
+  const digitsOnly = trimmed.replace(/\D/g, '');
+  if (/^\d{10}$/.test(digitsOnly)) {
+    const company = await apiverket.getCompany(digitsOnly);
+    return company ? [apiverket.toCompanyHit(company)] : [];
+  }
+
   const cached = await getSearchCache(trimmed);
   if (cached) return cached;
 

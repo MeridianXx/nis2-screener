@@ -3,30 +3,40 @@ import type { CompanyHit, CompanyProfile } from '@/lib/mocks/companies';
 const TIMEOUT_MS = 8000;
 const BASE_URL = 'https://apiverket.se';
 
-// Apiverket response shapes — best effort against the documented structure
-// (https://apiverket.se/docs returned 403 from this sandbox at build time).
-// Field names are tolerant: snake_case from the API plus a couple of common
-// alternatives. If the live response differs, adjust this file only — every
-// other module talks to the normalized CompanyProfile shape.
+// Apiverket response shape — confirmed against a live response on
+// 2026-04-27. The API wraps payloads in { meta, data }; sni_codes is an
+// array of { code, description } objects; org_number uses an underscore;
+// and the address is flattened to postal_code + city at the top level
+// (the address field itself is often null). Field parsing is tolerant of
+// the older flat / array-of-strings shapes too so older fixtures keep
+// working in tests.
 
-type ApiverketAddress = {
+type ApiverketAddressObject = {
   street?: string;
   postal_code?: string;
   postalCode?: string;
   city?: string;
 };
 
+type ApiverketSniEntry = string | { code?: string; description?: string };
+
 type ApiverketCompanyRaw = {
+  org_number?: string;
   orgnr?: string;
   organisation_number?: string;
   name?: string;
   legal_form?: string | null;
   legalForm?: string | null;
-  sni_codes?: string[];
-  sniCodes?: string[];
-  address?: ApiverketAddress | null;
+  sni_codes?: ApiverketSniEntry[];
+  sniCodes?: ApiverketSniEntry[];
+  address?: ApiverketAddressObject | string | null;
+  postal_code?: string | null;
+  postalCode?: string | null;
+  city?: string | null;
   status?: string | null;
 };
+
+type ApiverketEnvelope<T> = { meta?: unknown; data?: T };
 
 type ApiverketSearchRaw =
   | ApiverketCompanyRaw[]
@@ -84,30 +94,47 @@ export function normalizeSniCode(raw: string | null | undefined): string | null 
   return `${digits.slice(0, 2)}.${digits.slice(2, 4)}`;
 }
 
-function normalizeAddress(raw: ApiverketAddress | null | undefined) {
-  if (!raw) return null;
-  const street = raw.street ?? undefined;
-  const postalCode = raw.postal_code ?? raw.postalCode ?? undefined;
-  const city = raw.city ?? undefined;
+function normalizeAddress(raw: ApiverketCompanyRaw) {
+  const addressObj =
+    raw.address && typeof raw.address === 'object' ? (raw.address as ApiverketAddressObject) : null;
+  const street = addressObj?.street ?? undefined;
+  const postalCode =
+    raw.postal_code ?? raw.postalCode ?? addressObj?.postal_code ?? addressObj?.postalCode ?? undefined;
+  const city = raw.city ?? addressObj?.city ?? undefined;
   if (!street && !postalCode && !city) return null;
   return { street, postalCode, city };
 }
 
+function extractSniCode(entry: ApiverketSniEntry): string | null {
+  if (typeof entry === 'string') return normalizeSniCode(entry);
+  return normalizeSniCode(entry.code ?? null);
+}
+
 function normalizeCompany(raw: ApiverketCompanyRaw): ApiverketCompany | null {
-  const orgnr = (raw.orgnr ?? raw.organisation_number ?? '').replace(/\D/g, '');
+  const orgnr = (raw.org_number ?? raw.orgnr ?? raw.organisation_number ?? '').replace(/\D/g, '');
   if (!orgnr) return null;
   const rawSni = raw.sni_codes ?? raw.sniCodes ?? [];
   const sniCodes = rawSni
-    .map((code) => normalizeSniCode(code))
+    .map((entry) => extractSniCode(entry))
     .filter((code): code is string => code !== null);
   return {
     orgnr,
     name: raw.name ?? '',
     legalForm: raw.legal_form ?? raw.legalForm ?? null,
     sniCodes,
-    address: normalizeAddress(raw.address),
+    address: normalizeAddress(raw),
     status: raw.status ?? null,
   };
+}
+
+// Apiverket wraps successful responses as { meta, data }. Tests + older
+// fixtures may hand back unwrapped objects, so accept both.
+function unwrap<T>(payload: T | ApiverketEnvelope<T> | null): T | null {
+  if (!payload) return null;
+  if (typeof payload === 'object' && 'data' in payload && payload.data !== undefined) {
+    return (payload as ApiverketEnvelope<T>).data ?? null;
+  }
+  return payload as T;
 }
 
 async function callApiverket<T>(path: string): Promise<{ status: number; json: T | null; text: string }> {
@@ -140,8 +167,15 @@ async function callApiverket<T>(path: string): Promise<{ status: number; json: T
 export async function searchCompanies(query: string): Promise<ApiverketCompany[]> {
   const trimmed = query.trim();
   if (!trimmed) return [];
+  // The free-text /v1/companies?q= endpoint returns 404 against the live
+  // API as of 2026-04-27 — we don't yet know the documented search path.
+  // Until that's resolved, the route still tries this URL so the app surfaces
+  // an error rather than pretending to work; lib/company.ts adds an orgnr
+  // shortcut so digit-only queries still return a hit via getCompany().
   const path = `/v1/companies?q=${encodeURIComponent(trimmed)}`;
-  const { status, json, text } = await callApiverket<ApiverketSearchRaw>(path);
+  const { status, json, text } = await callApiverket<ApiverketEnvelope<ApiverketSearchRaw> | ApiverketSearchRaw>(
+    path,
+  );
 
   if (status === 429) {
     throw new ApiverketRateLimitError(parseRetryAfter(text));
@@ -149,7 +183,8 @@ export async function searchCompanies(query: string): Promise<ApiverketCompany[]
   if (status === 404) return [];
   if (status >= 400) throw new ApiverketUpstreamError(status, text);
 
-  const list = Array.isArray(json) ? json : (json?.companies ?? json?.results ?? []);
+  const data = unwrap(json);
+  const list = Array.isArray(data) ? data : (data?.companies ?? data?.results ?? []);
   return list
     .map((raw) => normalizeCompany(raw))
     .filter((c): c is ApiverketCompany => c !== null);
@@ -159,15 +194,16 @@ export async function getCompany(orgnr: string): Promise<ApiverketCompany | null
   const cleaned = orgnr.replace(/\D/g, '');
   if (cleaned.length !== 10) return null;
 
-  const { status, json, text } = await callApiverket<ApiverketCompanyRaw>(
+  const { status, json, text } = await callApiverket<ApiverketEnvelope<ApiverketCompanyRaw> | ApiverketCompanyRaw>(
     `/v1/companies/${cleaned}`,
   );
 
   if (status === 404) return null;
   if (status === 429) throw new ApiverketRateLimitError(parseRetryAfter(text));
   if (status >= 400) throw new ApiverketUpstreamError(status, text);
-  if (!json) return null;
-  return normalizeCompany(json);
+  const data = unwrap(json);
+  if (!data) return null;
+  return normalizeCompany(data);
 }
 
 function parseRetryAfter(text: string): number | null {

@@ -121,6 +121,41 @@ describe('searchCompanies + getCompany — fetch behaviour', () => {
     expect(results[0]?.legalForm).toBe('AB');
   });
 
+  test('getCompany unwraps { meta, data } envelope and flattened address', async () => {
+    process.env.APIVERKET_API_KEY = 'sk_test_123';
+    // Shape mirrors the live 2026-04-27 response from /v1/companies/{orgnr}.
+    globalThis.fetch = (async () =>
+      new Response(
+        JSON.stringify({
+          meta: { request_id: 'req_x', rate_limit: { limit: 100, remaining: 9 } },
+          data: {
+            org_number: '5560566258',
+            name: 'Ericsson AB',
+            legal_form: 'Övriga aktiebolag',
+            status: 'Aktivt',
+            address: null,
+            postal_code: '16480',
+            city: 'STOCKHOLM',
+            sni_codes: [
+              { code: '62100', description: 'Dataprogrammering' },
+              { code: '70100', description: 'Verksamheter som utövas av huvudkontor' },
+            ],
+          },
+        }),
+        { status: 200 },
+      )) as typeof fetch;
+
+    const result = await getCompany('5560566258');
+    expect(result).not.toBeNull();
+    expect(result?.orgnr).toBe('5560566258');
+    expect(result?.name).toBe('Ericsson AB');
+    expect(result?.legalForm).toBe('Övriga aktiebolag');
+    expect(result?.status).toBe('Aktivt');
+    expect(result?.sniCodes).toEqual(['62.10', '70.10']);
+    expect(result?.address?.city).toBe('STOCKHOLM');
+    expect(result?.address?.postalCode).toBe('16480');
+  });
+
   test('getCompany rejects orgnr that is not 10 digits without calling upstream', async () => {
     process.env.APIVERKET_API_KEY = 'sk_test_123';
     let called = false;
