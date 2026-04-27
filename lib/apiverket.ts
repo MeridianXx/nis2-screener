@@ -61,7 +61,15 @@ export class ApiverketNotConfiguredError extends Error {
 }
 
 export class ApiverketRateLimitError extends Error {
-  constructor(public retryAfterSeconds: number | null) {
+  constructor(
+    public retryAfterSeconds: number | null,
+    public diagnostic: {
+      remaining: number | null;
+      limit: number | null;
+      resetEpoch: number | null;
+      bodySnippet: string;
+    },
+  ) {
     super('Apiverket-rate-limit nådd');
     this.name = 'ApiverketRateLimitError';
   }
@@ -184,7 +192,7 @@ export async function searchCompanies(query: string, limit = 6): Promise<Apiverk
   );
 
   if (status === 429) {
-    throw new ApiverketRateLimitError(parseRetryAfter(text));
+    throw new ApiverketRateLimitError(parseRetryAfter(text), buildRateLimitDiagnostic(text));
   }
   if (status === 404) return [];
   if (status >= 400) throw new ApiverketUpstreamError(status, text);
@@ -205,7 +213,8 @@ export async function getCompany(orgnr: string): Promise<ApiverketCompany | null
   );
 
   if (status === 404) return null;
-  if (status === 429) throw new ApiverketRateLimitError(parseRetryAfter(text));
+  if (status === 429)
+    throw new ApiverketRateLimitError(parseRetryAfter(text), buildRateLimitDiagnostic(text));
   if (status >= 400) throw new ApiverketUpstreamError(status, text);
   const data = unwrap(json);
   if (!data) return null;
@@ -218,6 +227,38 @@ function parseRetryAfter(text: string): number | null {
   if (!match || !match[1]) return null;
   const n = parseInt(match[1], 10);
   return Number.isFinite(n) ? n : null;
+}
+
+// Pull Apiverket's documented meta.rate_limit block out of a 429 body so
+// we can tell per-minute throttling apart from a fully exhausted daily
+// quota. Logged + included in the error so it's visible in Vercel logs.
+function buildRateLimitDiagnostic(text: string): {
+  remaining: number | null;
+  limit: number | null;
+  resetEpoch: number | null;
+  bodySnippet: string;
+} {
+  let remaining: number | null = null;
+  let limit: number | null = null;
+  let resetEpoch: number | null = null;
+  try {
+    const body = JSON.parse(text) as {
+      meta?: { rate_limit?: { limit?: number; remaining?: number; reset?: number } };
+    };
+    const rl = body?.meta?.rate_limit;
+    if (rl) {
+      if (typeof rl.limit === 'number') limit = rl.limit;
+      if (typeof rl.remaining === 'number') remaining = rl.remaining;
+      if (typeof rl.reset === 'number') resetEpoch = rl.reset;
+    }
+  } catch {
+    // Not JSON — keep nulls.
+  }
+  console.warn(
+    '[apiverket] 429',
+    JSON.stringify({ remaining, limit, resetEpoch, bodySnippet: text.slice(0, 200) }),
+  );
+  return { remaining, limit, resetEpoch, bodySnippet: text.slice(0, 200) };
 }
 
 // Adapter to the project-wide CompanyProfile shape used by the cache and

@@ -6,8 +6,9 @@ import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { CompanyHit } from '@/lib/mocks/companies';
 
 // 500ms instead of PRD's 350ms because Apiverket's per-minute rate limit
-// is sharper than the daily quota suggests; longer debounce means a typed
-// search like "Care of Sweden" fires one request when the user stops
+// is tight (10/min on starter, per their docs) and each typed character
+// past the debounce window fires its own request. Longer debounce means
+// a search like "Care of Sweden" fires one request when the user stops
 // typing rather than five along the way.
 const DEBOUNCE_MS = 500;
 const MIN_QUERY_LENGTH = 3;
