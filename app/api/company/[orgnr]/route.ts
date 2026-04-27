@@ -37,7 +37,7 @@ export async function GET(_req: Request, { params }: { params: { orgnr: string }
       const message = dailyExhausted
         ? 'Företagsuppslagets dagliga gräns är nådd. Försök igen imorgon.'
         : 'Företagsuppslaget är tillfälligt blockerat — vänta en stund och försök igen.';
-      return NextResponse.json(fail('RATE_LIMITED', message), {
+      return NextResponse.json(fail('RATE_LIMITED', message, err.diagnostic), {
         status: 429,
         headers: retry != null ? { 'Retry-After': String(retry) } : undefined,
       });
