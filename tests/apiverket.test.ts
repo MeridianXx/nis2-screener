@@ -116,7 +116,10 @@ describe('searchCompanies + getCompany — fetch behaviour', () => {
 
     const results = await searchCompanies('acme');
     expect(results).toHaveLength(1);
-    expect(results[0]?.sniCodes).toEqual(['62.01', '62.02']);
+    expect(results[0]?.sniCodes).toEqual([
+      { code: '62.01', description: null },
+      { code: '62.02', description: null },
+    ]);
     expect(results[0]?.address?.postalCode).toBe('11122');
     expect(results[0]?.legalForm).toBe('AB');
   });
@@ -150,7 +153,9 @@ describe('searchCompanies + getCompany — fetch behaviour', () => {
     expect(calledUrl).toContain('limit=6');
     expect(results).toHaveLength(1);
     expect(results[0]?.orgnr).toBe('5560566258');
-    expect(results[0]?.sniCodes).toEqual(['62.10']);
+    expect(results[0]?.sniCodes).toEqual([
+      { code: '62.10', description: 'Dataprogrammering' },
+    ]);
   });
 
   test('searchCompanies rejects queries shorter than 2 chars without calling upstream', async () => {
@@ -196,7 +201,10 @@ describe('searchCompanies + getCompany — fetch behaviour', () => {
     expect(result?.name).toBe('Ericsson AB');
     expect(result?.legalForm).toBe('Övriga aktiebolag');
     expect(result?.status).toBe('Aktivt');
-    expect(result?.sniCodes).toEqual(['62.10', '70.10']);
+    expect(result?.sniCodes).toEqual([
+      { code: '62.10', description: 'Dataprogrammering' },
+      { code: '70.10', description: 'Verksamheter som utövas av huvudkontor' },
+    ]);
     expect(result?.address?.city).toBe('STOCKHOLM');
     expect(result?.address?.postalCode).toBe('16480');
   });

@@ -46,8 +46,9 @@ export type ApiverketCompany = {
   orgnr: string;
   name: string;
   legalForm: string | null;
-  // Normalized to "62.01" form (matches data/sni-mapping.json).
-  sniCodes: string[];
+  // Normalized to "62.01" form (matches data/sni-mapping.json), with the
+  // human-readable Swedish description from Apiverket preserved alongside.
+  sniCodes: { code: string; description: string | null }[];
   address: { street?: string; postalCode?: string; city?: string } | null;
   status: string | null;
 };
@@ -105,9 +106,16 @@ function normalizeAddress(raw: ApiverketCompanyRaw) {
   return { street, postalCode, city };
 }
 
-function extractSniCode(entry: ApiverketSniEntry): string | null {
-  if (typeof entry === 'string') return normalizeSniCode(entry);
-  return normalizeSniCode(entry.code ?? null);
+function extractSniEntry(
+  entry: ApiverketSniEntry,
+): { code: string; description: string | null } | null {
+  if (typeof entry === 'string') {
+    const code = normalizeSniCode(entry);
+    return code ? { code, description: null } : null;
+  }
+  const code = normalizeSniCode(entry.code ?? null);
+  if (!code) return null;
+  return { code, description: entry.description ?? null };
 }
 
 function normalizeCompany(raw: ApiverketCompanyRaw): ApiverketCompany | null {
@@ -115,8 +123,8 @@ function normalizeCompany(raw: ApiverketCompanyRaw): ApiverketCompany | null {
   if (!orgnr) return null;
   const rawSni = raw.sni_codes ?? raw.sniCodes ?? [];
   const sniCodes = rawSni
-    .map((entry) => extractSniCode(entry))
-    .filter((code): code is string => code !== null);
+    .map((entry) => extractSniEntry(entry))
+    .filter((entry): entry is { code: string; description: string | null } => entry !== null);
   return {
     orgnr,
     name: raw.name ?? '',
@@ -217,13 +225,17 @@ function parseRetryAfter(text: string): number | null {
 // so those fields are always null and the user fills them in on the
 // confirmation page.
 export function toCompanyProfile(c: ApiverketCompany): CompanyProfile {
-  const sni = c.sniCodes[0] ?? '';
+  const sni = c.sniCodes[0];
   return {
     orgnr: c.orgnr,
     name: c.name,
     city: c.address?.city ?? '',
-    sniCode: sni,
-    sniLabel: c.legalForm ?? null,
+    sniCode: sni?.code ?? '',
+    // Use the human-readable SNI description (e.g. "Partihandel med
+    // medicinsk utrustning") rather than legal_form (e.g. "Aktiebolag")
+    // — they're different things and the SNI label is what /assess/confirm
+    // needs to show next to the code.
+    sniLabel: sni?.description ?? null,
     employees: null,
     turnover: null,
     balance: null,
