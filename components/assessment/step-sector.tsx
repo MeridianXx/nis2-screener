@@ -56,7 +56,7 @@ function SectorGroup({ title, sectors, value, onChange }: GroupProps) {
   return (
     <div className="flex flex-col gap-3">
       <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-mid">{title}</p>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid auto-rows-fr gap-2 sm:grid-cols-2">
         {sectors.map((sector) => (
           <SectorOption
             key={sector.key}
@@ -83,7 +83,7 @@ function SectorOption({ sector, selected, onSelect, muted }: OptionProps) {
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
-      className={`flex flex-col gap-1 rounded-xl border bg-white px-4 py-3 text-left transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime ${
+      className={`flex h-full flex-col gap-1 rounded-xl border bg-white px-4 py-3 text-left transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime ${
         selected ? 'border-deep' : 'border-border hover:border-mid'
       }`}
     >
