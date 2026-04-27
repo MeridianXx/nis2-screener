@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { fail, ok } from '@/lib/api-response';
 import { CompanyNotFoundError, fetchCompanyProfile } from '@/lib/company';
-import { RoaringNotConfiguredError } from '@/lib/roaring';
+import { ApiverketNotConfiguredError, ApiverketRateLimitError } from '@/lib/apiverket';
 
 const orgnrSchema = z.string().regex(/^\d{10}$/, 'Organisationsnummer ska vara 10 siffror.');
 
@@ -25,10 +25,23 @@ export async function GET(_req: Request, { params }: { params: { orgnr: string }
         { status: 404 },
       );
     }
-    if (err instanceof RoaringNotConfiguredError) {
+    if (err instanceof ApiverketNotConfiguredError) {
       return NextResponse.json(
         fail('NOT_CONFIGURED', 'Företagsuppslag är inte aktiverat i denna miljö.'),
         { status: 503 },
+      );
+    }
+    if (err instanceof ApiverketRateLimitError) {
+      const retry = err.retryAfterSeconds;
+      return NextResponse.json(
+        fail(
+          'RATE_LIMITED',
+          'Företagsuppslagets dagliga gräns är nådd. Försök igen senare.',
+        ),
+        {
+          status: 429,
+          headers: retry != null ? { 'Retry-After': String(retry) } : undefined,
+        },
       );
     }
     console.error('[company/[orgnr]] failed:', err);
