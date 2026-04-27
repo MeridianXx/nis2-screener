@@ -1,0 +1,127 @@
+{
+  "$schema": "SNI (NACE rev. 2) → NIS2-sektor mappning. Källa: NIS2-direktivets bilagor, MCFFS 2026:1, MCF-vägledning.",
+  "$notes": "confidence=high → auto-kör regelmotor. confidence=medium eller disambiguation → fråga användaren. Sektorvärden motsvarar keys i SECTOR_META.",
+  "mappings": {
+    "06.10": { "sector": "energi", "bilaga": 1, "confidence": "high", "label": "Utvinning av råolja" },
+    "06.20": { "sector": "energi", "bilaga": 1, "confidence": "high", "label": "Utvinning av naturgas" },
+
+    "10": { "sector": "livsmedel", "bilaga": 2, "confidence": "medium", "label": "Livsmedelsframställning", "prefix": true },
+    "11.05": { "sector": "livsmedel", "bilaga": 2, "confidence": "high", "label": "Framställning av öl" },
+    "11.07": { "sector": "livsmedel", "bilaga": 2, "confidence": "high", "label": "Framställning av läskedrycker, mineralvatten" },
+
+    "20.": { "sector": "tillverkning", "bilaga": 2, "confidence": "medium", "label": "Kemikalietillverkning", "prefix": true, "note": "Vissa delar omfattas även av kemikaliesektorn bilaga 2" },
+
+    "21.10": { "sector": "halsa-tillv", "bilaga": 1, "confidence": "high", "label": "Tillverkning av farmaceutiska basprodukter" },
+    "21.20": { "sector": "halsa-tillv", "bilaga": 1, "confidence": "high", "label": "Tillverkning av läkemedel" },
+
+    "26.20": { "sector": "tillverkning", "bilaga": 2, "confidence": "high", "label": "Tillverkning av datorer och kringutrustning" },
+    "26.30": { "sector": "tillverkning", "bilaga": 2, "confidence": "high", "label": "Tillverkning av kommunikationsutrustning" },
+    "26.40": { "sector": "tillverkning", "bilaga": 2, "confidence": "high", "label": "Tillverkning av hemelektronik" },
+    "26.51": { "sector": "tillverkning", "bilaga": 2, "confidence": "high", "label": "Tillverkning av instrument och apparater" },
+    "26.60": { "sector": "halsa-tillv", "bilaga": 1, "confidence": "high", "label": "Tillverkning av medicintekniska produkter" },
+
+    "27.11": { "sector": "tillverkning", "bilaga": 2, "confidence": "high", "label": "Tillverkning av elmotorer" },
+    "27.12": { "sector": "tillverkning", "bilaga": 2, "confidence": "high", "label": "Tillverkning av eldistributionsutrustning" },
+    "27.20": { "sector": "tillverkning", "bilaga": 2, "confidence": "high", "label": "Tillverkning av batterier" },
+
+    "28.": { "sector": "tillverkning", "bilaga": 2, "confidence": "medium", "label": "Tillverkning av maskiner", "prefix": true },
+
+    "29.10": { "sector": "tillverkning", "bilaga": 2, "confidence": "high", "label": "Tillverkning av motorfordon" },
+    "29.20": { "sector": "tillverkning", "bilaga": 2, "confidence": "high", "label": "Tillverkning av karosserier" },
+    "29.31": { "sector": "tillverkning", "bilaga": 2, "confidence": "high", "label": "Tillverkning av elektrisk utrustning för motorfordon" },
+    "29.32": { "sector": "tillverkning", "bilaga": 2, "confidence": "high", "label": "Tillverkning av andra delar till motorfordon" },
+
+    "30.30": { "sector": "tillverkning", "bilaga": 2, "confidence": "high", "label": "Tillverkning av luft- och rymdfarkoster" },
+
+    "35.11": { "sector": "energi", "bilaga": 1, "confidence": "high", "label": "Generering av el" },
+    "35.12": { "sector": "energi", "bilaga": 1, "confidence": "high", "label": "Elöverföring" },
+    "35.13": { "sector": "energi", "bilaga": 1, "confidence": "high", "label": "Eldistribution" },
+    "35.14": { "sector": "energi", "bilaga": 1, "confidence": "high", "label": "Elhandel" },
+    "35.21": { "sector": "energi", "bilaga": 1, "confidence": "high", "label": "Gasframställning" },
+    "35.22": { "sector": "energi", "bilaga": 1, "confidence": "high", "label": "Gasdistribution via rörnät" },
+    "35.23": { "sector": "energi", "bilaga": 1, "confidence": "high", "label": "Gashandel" },
+    "35.30": { "sector": "energi", "bilaga": 1, "confidence": "high", "label": "Försörjning av värme och kyla" },
+
+    "36.00": { "sector": "dricksvatten", "bilaga": 1, "confidence": "high", "label": "Vattenförsörjning" },
+    "37.00": { "sector": "avloppsvatten", "bilaga": 1, "confidence": "high", "label": "Avloppsrening" },
+    "38.": { "sector": "avfall", "bilaga": 2, "confidence": "high", "label": "Avfallshantering", "prefix": true },
+
+    "49.10": { "sector": "transport", "bilaga": 1, "confidence": "high", "label": "Järnvägstransport, passagerare" },
+    "49.20": { "sector": "transport", "bilaga": 1, "confidence": "high", "label": "Järnvägstransport, gods" },
+    "49.31": { "sector": "transport", "bilaga": 1, "confidence": "high", "label": "Kollektivtrafik" },
+    "49.41": { "sector": "transport", "bilaga": 1, "confidence": "high", "label": "Vägtransport, gods" },
+
+    "50.10": { "sector": "transport", "bilaga": 1, "confidence": "high", "label": "Sjötransport, passagerare" },
+    "50.20": { "sector": "transport", "bilaga": 1, "confidence": "high", "label": "Sjötransport, gods" },
+
+    "51.10": { "sector": "transport", "bilaga": 1, "confidence": "high", "label": "Lufttransport, passagerare" },
+    "51.21": { "sector": "transport", "bilaga": 1, "confidence": "high", "label": "Lufttransport, gods" },
+
+    "52.21": { "sector": "transport", "bilaga": 1, "confidence": "medium", "label": "Serviceverksamhet landtransport" },
+    "52.22": { "sector": "transport", "bilaga": 1, "confidence": "medium", "label": "Serviceverksamhet sjötransport" },
+    "52.23": { "sector": "transport", "bilaga": 1, "confidence": "medium", "label": "Serviceverksamhet lufttransport" },
+
+    "53.10": { "sector": "post", "bilaga": 2, "confidence": "high", "label": "Postbefordran" },
+    "53.20": { "sector": "post", "bilaga": 2, "confidence": "high", "label": "Annan post- och budverksamhet" },
+
+    "46.38": { "sector": "livsmedel", "bilaga": 2, "confidence": "high", "label": "Partihandel med livsmedel" },
+
+    "61.10": { "sector": "digital-infra", "bilaga": 1, "confidence": "high", "label": "Trådbunden telekommunikation" },
+    "61.20": { "sector": "digital-infra", "bilaga": 1, "confidence": "high", "label": "Trådlös telekommunikation" },
+    "61.30": { "sector": "digital-infra", "bilaga": 1, "confidence": "high", "label": "Satellitkommunikation" },
+    "61.90": { "sector": "digital-infra", "bilaga": 1, "confidence": "medium", "label": "Andra telekommunikationstjänster" },
+
+    "62.01": {
+      "sector": null, "bilaga": null, "confidence": "low", "label": "Dataprogrammering",
+      "disambiguation": {
+        "question": "Vilken typ av IT-verksamhet?",
+        "options": [
+          { "label": "Utvecklingskonsult / app- och webbutveckling", "maps": { "sector": null, "bilaga": null } },
+          { "label": "Managed Service Provider (hanterar kunders IT-miljö)", "maps": { "sector": "ikt", "bilaga": 1 } },
+          { "label": "Managed Security Services (SOC, säkerhetsövervakning)", "maps": { "sector": "ikt", "bilaga": 1 } }
+        ]
+      }
+    },
+    "62.02": {
+      "sector": null, "bilaga": null, "confidence": "low", "label": "Datakonsultverksamhet",
+      "disambiguation": {
+        "question": "Är konsultverksamheten hantering av kundernas IT-miljö?",
+        "options": [
+          { "label": "Ja, vi driftar/förvaltar kunders IT eller säkerhet", "maps": { "sector": "ikt", "bilaga": 1 } },
+          { "label": "Nej, rådgivning/strategi/utveckling", "maps": { "sector": null, "bilaga": null } }
+        ]
+      }
+    },
+    "62.03": { "sector": "ikt", "bilaga": 1, "confidence": "high", "label": "Datordrifttjänster" },
+
+    "63.11": {
+      "sector": "digital-infra", "bilaga": 1, "confidence": "medium", "label": "Databehandling, hosting",
+      "disambiguation": {
+        "question": "Vilken typ av hosting-verksamhet?",
+        "options": [
+          { "label": "Datacenter, molnleverantör, CDN", "maps": { "sector": "digital-infra", "bilaga": 1 } },
+          { "label": "Managed IT-tjänster åt externa kunder", "maps": { "sector": "ikt", "bilaga": 1 } },
+          { "label": "Webbhosting för småkunder", "maps": { "sector": null, "bilaga": null } }
+        ]
+      }
+    },
+    "63.12": { "sector": "digitala-lev", "bilaga": 2, "confidence": "medium", "label": "Webbportaler" },
+
+    "64.19": { "sector": "bank", "bilaga": 1, "confidence": "high", "label": "Banker" },
+    "64.20": { "sector": "bank", "bilaga": 1, "confidence": "medium", "label": "Holdingbolag" },
+    "64.30": { "sector": "finans", "bilaga": 1, "confidence": "medium", "label": "Investmentbolag, fonder" },
+
+    "66.11": { "sector": "finans", "bilaga": 1, "confidence": "high", "label": "Finansmarknadsadministration" },
+    "66.12": { "sector": "finans", "bilaga": 1, "confidence": "high", "label": "Värdepappersmäklare" },
+
+    "72.": { "sector": "forskning", "bilaga": 2, "confidence": "medium", "label": "Forskning och utveckling", "prefix": true },
+
+    "84.": { "sector": "offentlig", "bilaga": 1, "confidence": "medium", "label": "Offentlig förvaltning", "prefix": true, "note": "Kommuner, regioner, myndigheter omfattas oavsett storlek" },
+
+    "86.10": { "sector": "halsa-vard", "bilaga": 1, "confidence": "high", "label": "Sluten sjukvård" },
+    "86.21": { "sector": "halsa-vard", "bilaga": 1, "confidence": "high", "label": "Öppen hälso- och sjukvård" },
+    "86.22": { "sector": "halsa-vard", "bilaga": 1, "confidence": "high", "label": "Specialistläkarmottagningar" },
+    "86.23": { "sector": "halsa-vard", "bilaga": 1, "confidence": "high", "label": "Tandläkarmottagningar" },
+    "86.90": { "sector": "halsa-vard", "bilaga": 1, "confidence": "medium", "label": "Annan hälsoverksamhet" }
+  }
+}
