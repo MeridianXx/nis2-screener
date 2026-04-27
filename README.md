@@ -23,7 +23,16 @@ Byggs av Tech Stn för intern kvalificering av kunder och prospects, samt som le
 - Resultatvy på `/assess/result` med verdict-hero (VERDICT_STYLES per `docs/brand.md`), faktagrid och officiella resurser
 - AI-fördjupning via `/api/explain` (Anthropic `claude-sonnet-4-20250514`, max 1000 tokens, svensk 3-styckesprompt) med skeleton loader och fallback om API-nyckel saknas
 - Postgres-baserad `ExplanationCache` (30 dagars TTL) via Prisma — degraderar mjukt till "ingen cache" om databasen inte är konfigurerad
-- 45 enhetstester gröna (regelmotor, SNI-mapping, formulärhjälpare, prompt + cache-key)
+
+**Session 3 klar (april 2026):**
+- Företagssök på landing: debouncad autocomplete (350ms) som anropar `/api/company/search` och länkar vidare till `/assess/confirm`
+- `/assess/confirm` hämtar företagsprofil server-side, mappar SNI → NIS2-sektor och visar en faktasammanställning innan bedömningen körs
+- SNI-disambiguering för 62.01, 62.02 och 63.11 — användaren får välja vilken typ av IT/hosting-verksamhet det rör sig om innan resultat genereras
+- `lib/roaring.ts` är komplett kod-mässigt; aktiveras genom att sätta `ROARING_API_KEY` + `ROARING_BASE_URL` och flippa `NEXT_PUBLIC_USE_MOCK_COMPANY_DATA=false`. Tills dess används mock-data
+- `CompanyCache` (60 dagars TTL) ligger framför Roaring så samma orgnr inte slår API:et två gånger på 60 dagar
+- `AssessmentLog` skrivs vid varje resultatvisning (orgnr om hämtad, verdict, sektor, storleksklass — ingen PII)
+- Rate limiting på `/api/company/*` via Next.js middleware (3 uppslag/IP/min, in-memory token bucket per Vercel-instans)
+- 51 enhetstester gröna
 
 ## Teknisk stack
 
@@ -48,16 +57,23 @@ pnpm dev
 
 ### Driftsättning på Vercel
 
-För att `/api/explain` ska producera AI-fördjupning i molnet behöver två env-variabler sättas i Vercel-projektet (Production + Preview):
+För full funktionalitet behöver följande env-variabler sättas i Vercel-projektet (Production + Preview):
 
-| Variabel | Värde | Var den sätts |
+| Variabel | Värde | När den behövs |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | `sk-ant-...` från https://console.anthropic.com | Project Settings → Environment Variables |
-| `DATABASE_URL` | Postgres connection string (Vercel Postgres eller Neon) | Project Settings → Environment Variables |
+| `ANTHROPIC_API_KEY` | `sk-ant-...` från https://console.anthropic.com | För AI-fördjupning på `/api/explain` |
+| `DATABASE_URL` | Pooled connection string (auto-injiceras av Neon-integrationen) | För ExplanationCache, CompanyCache och AssessmentLog |
+| `DATABASE_URL_UNPOOLED` | Direkt connection string (auto-injiceras av Neon) | Används av `prisma migrate` under bygget |
+| `NEXT_PUBLIC_USE_MOCK_COMPANY_DATA` | `true` (mock) eller `false` (Roaring) | `true` tills Roaring-nyckel finns |
+| `ROARING_API_KEY` | API-nyckel från Roaring | När mock-flaggan flippas till `false` |
+| `ROARING_BASE_URL` | `https://api.roaring.io` | Samma som ovan |
 
-Efter att `DATABASE_URL` är satt: kör `pnpm prisma migrate deploy` mot databasen (lokalt mot samma URL eller via Vercel CLI) för att skapa `ExplanationCache`-tabellen. Utan databas fungerar appen ändå — `/api/explain` ringer Anthropic varje gång och hoppar över caching.
+Migrationerna körs automatiskt vid varje deploy via `vercel-build` (`prisma migrate deploy && next build`), så nya tabeller hamnar i databasen utan manuella steg.
 
-Utan `ANTHROPIC_API_KEY` returnerar `/api/explain` 503 med `code: 'NOT_CONFIGURED'`; resultatvyn faller då tillbaka till regelmotorns sammanfattning.
+Beteende när env saknas:
+- Utan `ANTHROPIC_API_KEY` returnerar `/api/explain` 503 (`NOT_CONFIGURED`); resultatvyn faller tillbaka till regelmotorns sammanfattning.
+- Utan `DATABASE_URL` skippas all caching och loggning tyst — appen fungerar men varje förfrågan slår upstream.
+- Med `NEXT_PUBLIC_USE_MOCK_COMPANY_DATA=true` returneras 4 mockföretag istället för riktiga Roaring-träffar.
 
 ## Viktigt för utvecklare
 
