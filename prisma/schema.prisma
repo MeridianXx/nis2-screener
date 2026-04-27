@@ -40,3 +40,10 @@ model ExplanationCache {
   createdAt DateTime @default(now())
   expiresAt DateTime
 }
+
+model SearchCache {
+  queryHash String   @id
+  results   Json
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}

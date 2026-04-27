@@ -1,8 +1,14 @@
+import { createHash } from 'node:crypto';
 import { isDatabaseConfigured, prisma } from '@/lib/prisma';
 import { EXPLANATION_TTL_DAYS } from '@/lib/explain-prompt';
-import type { CompanyProfile } from '@/lib/mocks/companies';
+import type { CompanyHit, CompanyProfile } from '@/lib/mocks/companies';
 
-export const COMPANY_CACHE_TTL_DAYS = 60;
+// Bumped from 60 → 90 days to fit Apiverket's 200/day free tier; per-orgnr
+// reads should rarely re-fetch.
+export const COMPANY_CACHE_TTL_DAYS = 90;
+// Search results churn faster (new companies register, names change) so a
+// shorter TTL keeps the autocomplete reasonably fresh.
+export const SEARCH_CACHE_TTL_DAYS = 7;
 
 // All cache helpers swallow Prisma errors and return null/false so a missing
 // or unreachable database gracefully degrades to "no cache" instead of
@@ -90,6 +96,39 @@ export async function setCompanyCache(profile: CompanyProfile): Promise<boolean>
     return true;
   } catch (err) {
     console.warn('[cache] company write failed:', err);
+    return false;
+  }
+}
+
+function searchCacheKey(query: string): string {
+  return createHash('sha256').update(query.trim().toLowerCase()).digest('hex').slice(0, 32);
+}
+
+export async function getSearchCache(query: string): Promise<CompanyHit[] | null> {
+  if (!isDatabaseConfigured()) return null;
+  try {
+    const row = await prisma.searchCache.findUnique({ where: { queryHash: searchCacheKey(query) } });
+    if (!row) return null;
+    if (row.expiresAt.getTime() < Date.now()) return null;
+    return row.results as unknown as CompanyHit[];
+  } catch (err) {
+    console.warn('[cache] search read failed:', err);
+    return null;
+  }
+}
+
+export async function setSearchCache(query: string, hits: CompanyHit[]): Promise<boolean> {
+  if (!isDatabaseConfigured()) return false;
+  const expiresAt = new Date(Date.now() + SEARCH_CACHE_TTL_DAYS * 24 * 60 * 60 * 1000);
+  try {
+    await prisma.searchCache.upsert({
+      where: { queryHash: searchCacheKey(query) },
+      update: { results: hits as unknown as object, expiresAt },
+      create: { queryHash: searchCacheKey(query), results: hits as unknown as object, expiresAt },
+    });
+    return true;
+  } catch (err) {
+    console.warn('[cache] search write failed:', err);
     return false;
   }
 }
