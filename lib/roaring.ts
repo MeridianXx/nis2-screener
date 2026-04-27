@@ -118,10 +118,20 @@ async function callRoaring<T>(path: string): Promise<T> {
 // Information" + "Company Financials" v2 APIs. They may need to be tuned
 // against the real sandbox response — see lib/company.ts for where to
 // inject logging while iterating.
+type RoaringSearchHit = {
+  companyId?: string;
+  organisationNumber?: string;
+  companyName?: string;
+  town?: string;
+  // Some search responses nest the address; flatten if present.
+  address?: { town?: string };
+};
+
 type RoaringSearchResponse = {
-  hits?: { companyId?: string; companyName?: string; town?: string }[];
-  // The API has shipped multiple shapes over the years; tolerate both.
-  companies?: { companyId?: string; companyName?: string; town?: string }[];
+  hitCount?: number;
+  hits?: RoaringSearchHit[];
+  // Older shapes — kept tolerant.
+  companies?: RoaringSearchHit[];
 };
 
 type RoaringCompanyResponse = {
@@ -161,14 +171,15 @@ function normalizeProfile(raw: RoaringCompanyResponse): CompanyProfile {
   };
 }
 
-// Roaring uses /{apiName}/{version}/{resource} per their auth guide example
-// (/person/1.0/person). Paths can be overridden via env to swap to a
-// different API product the sandbox subscription includes.
+// Roaring Company Search 2.0 endpoint per their developer portal:
+//   GET /se/company/search/2.0/search?freeText=...&pageSize=...
+// Hits come back as { hits: SearchHit[], hitCount, ... }. Override paths
+// via env if you only have a different API product subscribed.
 const SEARCH_PATH_TEMPLATE =
   process.env.ROARING_SEARCH_PATH ??
-  '/companysearch/2.0/companies?nameContaining={q}&maxHits={limit}';
+  '/se/company/search/2.0/search?freeText={q}&pageSize={limit}';
 const COMPANY_PATH_TEMPLATE =
-  process.env.ROARING_COMPANY_PATH ?? '/companyinformation/2.0/companies/{orgnr}';
+  process.env.ROARING_COMPANY_PATH ?? '/se/companyinformation/2.1/company/{orgnr}';
 
 function fillTemplate(template: string, vars: Record<string, string>): string {
   return template.replace(/\{(\w+)\}/g, (_, key: string) => vars[key] ?? '');
@@ -182,9 +193,9 @@ export async function searchCompanies(query: string, limit = 6): Promise<Company
   const json = await callRoaring<RoaringSearchResponse>(path);
   const rawHits = json.hits ?? json.companies ?? [];
   return rawHits.map((h) => ({
-    orgnr: h.companyId ?? '',
+    orgnr: h.companyId ?? h.organisationNumber ?? '',
     name: h.companyName ?? '',
-    city: h.town ?? '',
+    city: h.town ?? h.address?.town ?? '',
   }));
 }
 
