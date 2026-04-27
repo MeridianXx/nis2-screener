@@ -65,8 +65,10 @@ För full funktionalitet behöver följande env-variabler sättas i Vercel-proje
 | `DATABASE_URL` | Pooled connection string (auto-injiceras av Neon-integrationen) | För ExplanationCache, CompanyCache och AssessmentLog |
 | `DATABASE_URL_UNPOOLED` | Direkt connection string (auto-injiceras av Neon) | Används av `prisma migrate` under bygget |
 | `NEXT_PUBLIC_USE_MOCK_COMPANY_DATA` | `true` (mock) eller `false` (Roaring) | `true` tills Roaring-nyckel finns |
-| `ROARING_API_KEY` | API-nyckel från Roaring | När mock-flaggan flippas till `false` |
+| `ROARING_CLIENT_ID` | OAuth2 Client ID från Roaring (sandbox eller production) | När mock-flaggan flippas till `false` |
+| `ROARING_CLIENT_SECRET` | OAuth2 Client Secret från Roaring | När mock-flaggan flippas till `false` |
 | `ROARING_BASE_URL` | `https://api.roaring.io` | Samma som ovan |
+| `ROARING_TOKEN_URL` | Optional, default `${ROARING_BASE_URL}/token` | Bara om Roaring rotar token-endpointen separat |
 
 Migrationerna körs automatiskt vid varje deploy via `vercel-build` (`prisma migrate deploy && next build`), så nya tabeller hamnar i databasen utan manuella steg.
 
