@@ -5,7 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { CompanyHit } from '@/lib/mocks/companies';
 
-const DEBOUNCE_MS = 350;
+// 500ms instead of PRD's 350ms because Apiverket's per-minute rate limit
+// is sharper than the daily quota suggests; longer debounce means a typed
+// search like "Care of Sweden" fires one request when the user stops
+// typing rather than five along the way.
+const DEBOUNCE_MS = 500;
+const MIN_QUERY_LENGTH = 3;
 
 type Status = 'idle' | 'loading' | 'ready' | 'empty' | 'rate-limited' | 'error';
 
@@ -19,6 +24,16 @@ export function CompanySearch() {
 
   useEffect(() => {
     if (!debounced) {
+      setHits([]);
+      setStatus('idle');
+      return;
+    }
+    // Don't slam Apiverket on 1–2 char prefixes; usually noise while the
+    // user is mid-typing. The orgnr shortcut still works for full numbers
+    // because those are 10 digits.
+    const digitsOnly = debounced.replace(/\D/g, '');
+    const isOrgnr = /^\d{10}$/.test(digitsOnly);
+    if (!isOrgnr && debounced.length < MIN_QUERY_LENGTH) {
       setHits([]);
       setStatus('idle');
       return;
