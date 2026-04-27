@@ -14,6 +14,7 @@ export function CompanySearch() {
   const [query, setQuery] = useState('');
   const [hits, setHits] = useState<CompanyHit[]>([]);
   const [status, setStatus] = useState<Status>('idle');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const debounced = useDebouncedValue(query.trim(), DEBOUNCE_MS);
 
   useEffect(() => {
@@ -25,11 +26,22 @@ export function CompanySearch() {
 
     let cancelled = false;
     setStatus('loading');
+    setErrorMessage(null);
     async function run() {
       try {
         const res = await fetch(`/api/company/search?q=${encodeURIComponent(debounced)}`);
         if (cancelled) return;
         if (res.status === 429) {
+          // Two distinct 429s share this status: our per-minute middleware
+          // limit and Apiverket's per-day quota. Read the server-side
+          // message so the user sees the right one ("vänta en stund" vs
+          // "dagsgränsen nådd") instead of a generic guess.
+          const body = (await res.json().catch(() => null)) as
+            | { error?: { message?: string } }
+            | null;
+          setErrorMessage(
+            body?.error?.message ?? 'För många uppslag — vänta en stund och försök igen.',
+          );
           setStatus('rate-limited');
           return;
         }
@@ -75,7 +87,7 @@ export function CompanySearch() {
             <Row text={`Ingen träff för "${debounced}". Prova organisationsnummer eller starta en manuell bedömning.`} />
           ) : null}
           {status === 'rate-limited' ? (
-            <Row text="Du söker lite för fort — vänta en stund och försök igen." />
+            <Row text={errorMessage ?? 'För många uppslag — vänta en stund och försök igen.'} />
           ) : null}
           {status === 'error' ? (
             <Row text="Kunde inte söka just nu. Försök igen om en stund." />
