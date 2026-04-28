@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono, Newsreader } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 
 const newsreader = Newsreader({
@@ -33,7 +34,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const fontVars = `${newsreader.variable} ${inter.variable} ${jetbrainsMono.variable}`;
   return (
     <html lang="sv" className={fontVars}>
-      <body className="bg-surface text-ink antialiased">{children}</body>
+      <body className="bg-surface text-ink antialiased">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
